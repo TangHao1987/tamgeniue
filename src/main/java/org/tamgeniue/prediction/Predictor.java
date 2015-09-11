@@ -74,7 +74,7 @@ public class Predictor {
 		time_k++;
 		// prediction at time k==1
 		dtStart = System.currentTimeMillis();
-		GFStatesItem first = sgf.GenerateGFState(sd.macsTree, p, time_k);
+		GFStatesItem first = sgf.GenerateGFState(sd.getMacsTree(), p, time_k);
 		dtEnd = System.currentTimeMillis();
 		Configuration.time_hmm+=dtEnd-dtStart;
 		if(null==first) {
@@ -88,7 +88,7 @@ public class Predictor {
 			
 			// get relax micro state from grid
 			dtStart = System.currentTimeMillis();
-			ArrayList<RelaxMicroState> rf = gridService.forwardQueryMics(grid, sd.micsLevel);
+			ArrayList<RelaxMicroState> rf = gridService.forwardQueryMics(grid, sd.getMicsLevel());
 			dtEnd = System.currentTimeMillis();
 			Configuration.time_retrieve+=dtEnd-dtStart;
 			//System.out.println("for debug time_k:"+time_k+" RelaxMicroStates size:"+rf.size());
@@ -107,7 +107,7 @@ public class Predictor {
 			
 			
 			dtStart = System.currentTimeMillis();
-			GFStatesItem sec = sgf.GenerateGFState(sd.macsTree, p, time_k);// Following prediction
+			GFStatesItem sec = sgf.GenerateGFState(sd.getMacsTree(), p, time_k);// Following prediction
 			dtEnd = System.currentTimeMillis();
 			Configuration.time_hmm+=dtEnd-dtStart;
 			
@@ -161,7 +161,7 @@ public class Predictor {
 
 		// prediction at time k==1
 		time_k++;
-		GFStatesItem first = sgf.GenerateGFState(sd.macsTree, p, time_k);
+		GFStatesItem first = sgf.GenerateGFState(sd.getMacsTree(), p, time_k);
 		if(null==first){
 			return sgf;
 		}
@@ -178,17 +178,17 @@ public class Predictor {
 				
 				// as reuse, should go ahead. In data generation, the time start from 1, where reuseSD start to 
 				//store data from 0, therefore, time_k just go head
-				reuseMics = inReuseSDs.get(time_k ).micsLevel;
+				reuseMics = inReuseSDs.get(time_k ).getMicsLevel();
 			}
 
-			ArrayList<MicroState> nextMics = forwardQeryMicsReuse(sd.micsLevel,
+			ArrayList<MicroState> nextMics = forwardQeryMicsReuse(sd.getMicsLevel(),
 					reuseMics, g, ac, r);
 
 			sd = ac.getDendrogramMics(nextMics, r);// get dendrogram
 			if (null != outSDList) {
 				outSDList.add(sd);
 			}
-			GFStatesItem sec = sgf.GenerateGFState(sd.macsTree, p, time_k);// follwing // prediction
+			GFStatesItem sec = sgf.GenerateGFState(sd.getMacsTree(), p, time_k);// follwing // prediction
 			if(null==sec) break;
 			sgf.gfStates.addStatesItem(sec);
 		}

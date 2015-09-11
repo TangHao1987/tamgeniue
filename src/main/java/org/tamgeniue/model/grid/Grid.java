@@ -1,10 +1,12 @@
 package org.tamgeniue.model.grid;
 
+import org.springframework.stereotype.Component;
 import org.tamgeniue.grid.Configuration;
 import org.tamgeniue.model.roi.RoIState;
 
 import java.io.Serializable;
 
+@Component
 public class Grid implements Serializable {
 
     private static final long serialVersionUID = -9215443852086117712L;

@@ -47,8 +47,6 @@ public class GFStates {
 	}
 	
 	/**
-	 * 
-	 * @param gfi
 	 * @return: the current maximum value of MAP path
 	 */
 	public void addStatesItem(GFStatesItem gfi){
@@ -108,12 +106,7 @@ public class GFStates {
 		
 		return max*p_zk_xkj;
 	}
-	
-	
-	
-	/**
-	 * 
-	 */
+
 	public int[] MAPTraceBack(){
 		
 		//int T=timeTraState.getTimeLength();
@@ -131,11 +124,7 @@ public class GFStates {
 		}
 		return path;
 	}
-	
-	/**
-	 * 
-	 * @return
-	 */
+
 	public ArrayList<MacroState> getMacroStatePath(){
 		int[] path=MAPTraceBack();
 		if(null==path) return null;
@@ -164,7 +153,6 @@ public class GFStates {
 	/**
 	 * 
 	 * @param k time stamp k
-	 * @return
 	 */
 	public int getStateNum(int k){
 		if(0==k) return 1;
@@ -173,9 +161,7 @@ public class GFStates {
 	
 	/**
 	 * i-th state at time k
-	 * @param k
 	 * @param ki: i-th state
-	 * @return
 	 */
 	public MacroState  getState(int k,int ki){
 		return gfsList.get(k).macs.get(ki);
@@ -184,7 +170,6 @@ public class GFStates {
 	/**
 	 * get GFStateItem at time k
 	 * @param k: time k
-	 * @return
 	 */
 	public GFStatesItem getStatesItem(int k){
 		return gfsList.get(k);

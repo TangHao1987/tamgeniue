@@ -78,8 +78,7 @@ public class Configuration {
 
 	
 	public static int hitCount=0;
-	
-	
+
 	private static int stateId=0;
 	
 	public static int getStateId(){

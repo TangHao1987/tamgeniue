@@ -23,93 +23,63 @@ public class AgglomerativeCluster {
 	/**
 	 * 
 	 * @param queryRes: a set of query result form grid
-	 * @param r
-	 * @return
 	 */
 	public StatesDendrogram getDendrogram(ArrayList<Entry<Long, GridLeafTraHashItem>> queryRes,
 			double r) {
 
 		ArrayList<MicroState> mics = InitialMicroState(queryRes, r);
 		ArrayList<ArrayList<MacroState>> den= buildDendrogram(mics, r);
-		
-		StatesDendrogram sd=new StatesDendrogram(mics,den);
-		
-		return sd;
+
+        return new StatesDendrogram(mics,den);
 	}
 	
 	/**
 	 * get dendrogram from micro states directly
-	 * @param mics
-	 * @param r
-	 * @return
 	 */
 	public StatesDendrogram getDendrogramMics(ArrayList<MicroState> mics,double r){
 		
 		ArrayList<ArrayList<MacroState>> den= buildDendrogram(mics, r);//build the dendrogram
-		StatesDendrogram sd=new StatesDendrogram(mics,den);
-		
-		return sd;
+
+        return new StatesDendrogram(mics,den);
 	}
 	
 	/**
-	 * 
 	 * @param rMics: a set of relax micro state, which is query by a set of micro states
-	 * @param r
-	 * @return
 	 */
 	public StatesDendrogram getDendrogramRelaxMics(ArrayList<RelaxMicroState> rMics,double r){
-		
-		ArrayList<MicroState> maxMics=null;
-		StatesDendrogram sd=null;
-		maxMics= Releax2Mics( rMics, r);
-		
+		ArrayList<MicroState> maxMics= Releax2Mics( rMics, r);
 		ArrayList<ArrayList<MacroState>> den= buildDendrogram(maxMics, r);//build the dendrogram
-		
-		sd=new StatesDendrogram(maxMics,den);
-		
-		return sd;
+        return new StatesDendrogram(maxMics,den);
 	}
 	
 	/**
 	 * convert RelaxMicroState into Micro State by split and merge operation
-	 * @param rMics
-	 * @param r
-	 * @return
 	 */
 	public  ArrayList<MicroState> Releax2Mics(ArrayList<RelaxMicroState> rMics,double r){
 		ArrayList<MicroState> initalMics=SplitMics(rMics, r);//split the relax micro state
-		ArrayList<MicroState> maxMics=null;
-		maxMics= mergeMics(initalMics, null, r);//merge the micro state
-		
-		return maxMics;
+        return mergeMics(initalMics, null, r);
 	}
-	
-	/**
-	 * 
-	 * @param mics
-	 * @param r
-	 * @return
-	 */
+
 	private ArrayList<ArrayList<MacroState>> buildDendrogram(
 			ArrayList<MicroState> mics, double r) {
 
-		ArrayList<ArrayList<MacroState>> res = new ArrayList<ArrayList<MacroState>>();
+		ArrayList<ArrayList<MacroState>> res = new ArrayList<>();
 		if(null==mics){
 			return res;
 		}
 
 		// initialize the k-d tree. It is a quad-tree in fact
-		KDTree<MacroState> kt = new KDTree<MacroState>(2);// build quad-tree for
+		KDTree<MacroState> kt = new KDTree<>(2);// build quad-tree for
 															// nearest query
-		HashMap<Integer, MacroState> macs = new HashMap<Integer, MacroState>();// stateId->
+		HashMap<Integer, MacroState> macs = new HashMap<>();// stateId->
 																				// macro_state
 		invertPQTuple invertPQT = new invertPQTuple();// invert list, index the
 														// tuple in priority
 														// queue
-		PriorityQueue<PQTuple> pqLow = new PriorityQueue<PQTuple>(mics.size(),
+		PriorityQueue<PQTuple> pqLow = new PriorityQueue<>(mics.size(),
 				new ComparatorPQTuple());// lower level pq, if this queue is 0,
 											// this level is finished
-		PriorityQueue<PQTuple> pqHigh = new PriorityQueue<PQTuple>(mics.size(),
+		PriorityQueue<PQTuple> pqHigh = new PriorityQueue<>(mics.size(),
 				new ComparatorPQTuple());// high level pq
 
 		initialStateUpward(mics, kt, macs, invertPQT, pqLow);// initialize all
@@ -127,7 +97,7 @@ public class AgglomerativeCluster {
 
 			pqLow = pqHigh;
 			int c = (pqLow.size() > 1) ? pqLow.size() : 2;// minimum of pq is 2
-			pqHigh = new PriorityQueue<PQTuple>(c, new ComparatorPQTuple());
+			pqHigh = new PriorityQueue<>(c, new ComparatorPQTuple());
 
 		} while (pqLow.size() > 1);
 
@@ -143,36 +113,26 @@ public class AgglomerativeCluster {
 	 */
 	private ArrayList<MicroState> InitialMicroState(
 			ArrayList<Entry<Long, GridLeafTraHashItem>> queryRes, double r) {
-
 		// ArrayList<Entry<Long,GridLeafTraHashItem>>
 		// queryRes=g.queryRangeTimeSeqCells(cellArray);//query all the cells
 		// for next time stamp
 
 		// result storage
 		ArrayList<MicroState> res = null;
-
 		// initialize the k-d tree. It is a quad-tree in fact
-		KDTree<MicroState> kt = new KDTree<MicroState>(2);
+		KDTree<MicroState> kt = new KDTree<>(2);
+        if (null != queryRes && 0 != queryRes.size()) {
+            try {
+                // create initial micro states from points
+                ArrayList<MicroState> inMics = createMics(queryRes, kt);
+                res = mergeMics(inMics, kt, r);// merge thus micro states to maximum
+                                                // micro states
 
-		if (null==queryRes||0 == queryRes.size())
-			return res;
-
-		try {
-
-			ArrayList<MicroState> inMics = createMics(queryRes, kt);// create
-																	// initial
-																	// micro
-																	// states
-																	// from
-																	// points
-
-			res = mergeMics(inMics, kt, r);// merge thus micro states to maximum
-											// micro states
-
-		} catch (KeySizeException | KeyMissingException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
+            } catch (KeySizeException | KeyMissingException e) {
+                // TODO Auto-generated catch block
+                e.printStackTrace();
+            }
+        }
 
         return res;// return result
 	}
@@ -180,28 +140,22 @@ public class AgglomerativeCluster {
 	/**
 	 * given a set of micro states, and merge them into a set of maximum micro
 	 * states
-	 * 
-	 * @param inMics
 	 * @param inkt
 	 *            : if inkt is  null( inMics are stored in inkt at the same
 	 *            time), create a new k-d tree, and store each state into k-d
 	 *            tree
-	 * @param r
 	 */
-	public ArrayList<MicroState> mergeMics(ArrayList<MicroState> inMics,
-			KDTree<MicroState> inkt, double r) {
-		// result storage
-		ArrayList<MicroState> res = null;
-
+	public ArrayList<MicroState> mergeMics(ArrayList<MicroState> inMics,KDTree<MicroState> inkt, double r) {
 		if (null == inMics) {
-			return res;
+			return null;
 		}
+        ArrayList<MicroState> res;
 		try {
 		// store all the micro state and expend them, until the map is empty
-		HashMap<Integer, MicroState> ml = new HashMap<Integer, MicroState>();
+		HashMap<Integer, MicroState> ml = new HashMap<>();
 		if (null == inkt) {// if inkt is null, create a new k-d tree to store
 							// all micro states
-			inkt = new KDTree<MicroState>(2);
+			inkt = new KDTree<>(2);
 			for (MicroState inMic : inMics) {
 				// if inkt is null, create new k-d tree and insert micro states into it
 					KDTreeHashInsertMic(inMic, ml, inkt);
@@ -268,14 +222,10 @@ public class AgglomerativeCluster {
 
 			}
 		}
-		} catch (KeySizeException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		} catch (KeyMissingException e) {
-			// TODO Auto-generated catch block
+		} catch (KeySizeException | KeyMissingException e) {
 			e.printStackTrace();
 		}
-		if(inkt.size()>= Configuration.minNumPerMic){
+        if(inkt.size()>= Configuration.minNumPerMic){
 		res = inkt.toArrayListValue();// to arrayList
 		return res;
 		}else{
@@ -283,22 +233,12 @@ public class AgglomerativeCluster {
 		}
 	}
 
-	private boolean equalDoubleArray(double[] a,double b[]){
-		if(null==a||null==b) return false;
-		if(a.length!=b.length) return false;
-		for(int i=0;i<a.length;i++){
-			if(a[i]!=b[i]) return false;
-		}
-		return true;
-	}
 	/**
 	 * given a set of query result, initialize them into a set of micro states.
 	 * Most of time, just initialize each point as a state however, some points
-	 * are within the same cells are merged
-	 * 
-	 * @param queryRes
+	 * are within the same cells are merge
+     *
 	 * @param outkt: if outkt is not null, the micro states also are stored into k-d tree
-	 * @return
 	 * @throws KeySizeException
 	 * @throws KeyMissingException
 	 */
@@ -307,47 +247,37 @@ public class AgglomerativeCluster {
 			KDTree<MicroState> outkt) throws KeySizeException,
 			KeyMissingException {
 		if (null == outkt) {
-			outkt = new KDTree<MicroState>(2);
+			outkt = new KDTree<>(2);
 		}
 
 		if (0 == queryRes.size())
 			return null;
-
 		// initialize the micro state, consider each cell as a micro state
-		for (int i = 0; i < queryRes.size(); i++) {
-			// get cell
-			int txi = queryRes.get(i).getValue().getCellX();
-			int tyi = queryRes.get(i).getValue().getCellY();
-			GridCell tgci=g.getGridCell(txi, tyi);
+        for (Entry<Long, GridLeafTraHashItem> queryRe : queryRes) {
+            // get cell
+            int txi = queryRe.getValue().getCellX();
+            int tyi = queryRe.getValue().getCellY();
+            GridCell tgci = g.getGridCell(txi, tyi);
 
-			// consider each cell as a state
-			// idCount++;
-			MicroState ms = new MicroState(Configuration.getStateId());
-			 ms.addPoint(txi,tyi , tgci.density,queryRes.get(i)); 
+            // consider each cell as a state
+            // idCount++;
+            MicroState ms = new MicroState(Configuration.getStateId());
+            ms.addPoint(txi, tyi, tgci.density, queryRe);
 
-			// insert into k-d tree and hashmap
-			this.KDTreeHashInsertMic(ms, null, outkt);
+            // insert into k-d tree and hashmap
+            this.KDTreeHashInsertMic(ms, null, outkt);
 
-			// insert into k-d tree
-			// kt.replaceInsert(ms.getCenter(), ms);
-			// put into label hashmap
-			// ml.put(ms.id, ms);
-		}
-		if(outkt.size()>2){
-		ArrayList<MicroState> inMics = outkt.toArrayListValue();
-
-		return inMics;
-		}else {
-			return null;
-		}
+            // insert into k-d tree
+            // kt.replaceInsert(ms.getCenter(), ms);
+            // put into label hashmap
+            // ml.put(ms.id, ms);
+        }
+        return outkt.size()>2?outkt.toArrayListValue():null;
 	}
 	
 	
 	/**
 	 * split the relax micro state into a ast of micro states
-	 * @param rMics
-	 * @param r
-	 * @return
 	 */
 	public ArrayList<MicroState> SplitMics(ArrayList<RelaxMicroState> rMics,double r){
 		
@@ -355,7 +285,7 @@ public class AgglomerativeCluster {
 			return null;
 		}
 		
-		ArrayList<MicroState> res=new ArrayList<MicroState>();//store result
+		ArrayList<MicroState> res=new ArrayList<>();//store result
 		
 		for(RelaxMicroState rmic:rMics){
 			ArrayList<MicroState> rmicResItem=rmic.generateMics(r, g);//each relax mics are splited by themselves
@@ -369,8 +299,6 @@ public class AgglomerativeCluster {
 	
 	/**
 	 * go to up level to get good state
-	 *
-	 * @return
 	 */
 	public ArrayList<MacroState> StateUpward(KDTree<MacroState> kt,HashMap<Integer, MacroState> macs,
 			invertPQTuple invertPQT,PriorityQueue<PQTuple> pqLow,PriorityQueue<PQTuple> pqHigh,
@@ -414,8 +342,7 @@ public class AgglomerativeCluster {
 		if (null != hTuples) {
 			for (PQTuple item : hTuples) {
 				if (!inoutPqLow.remove(item)) {//remove from low, if not in low, remove from high
-					boolean flag=inPqHigh.remove(item);
-					
+					inPqHigh.remove(item);
 				}
 
 				MacroState itemHost = inMacs.get(item.host);
@@ -442,8 +369,7 @@ public class AgglomerativeCluster {
 		if (null != nbsTuples) {
 			for (PQTuple item : nbsTuples) {
 				if (!inoutPqLow.remove(item)) {
-					boolean flag=inPqHigh.remove(item);
-					//assert(flag);
+					    inPqHigh.remove(item);
 				}
 
 				MacroState itemHost = inMacs.get(item.host);
@@ -467,10 +393,6 @@ public class AgglomerativeCluster {
 	
 	/**
 	 * find a new clost tuple for a host, and update the corresponding DS
-	 * @param itemHost
-	 * @param inkt
-	 * @param inoutPqLow
-	 * @param inInvertPQT
 	 */
 	private void findNewTuple(MacroState itemHost, KDTree<MacroState> inkt,
 			PriorityQueue<PQTuple> inoutPqLow, invertPQTuple inInvertPQT) {
@@ -489,9 +411,6 @@ public class AgglomerativeCluster {
 	
 	/**
 	 * find the nearest macro state of host
-	 * @param host 
-	 * @param inkt
-	 * @return
 	 */
 	private MacroState getClosestMac(MacroState host, KDTree<MacroState> inkt) {
 
@@ -504,43 +423,27 @@ public class AgglomerativeCluster {
 			
 			int ni=getNearestState( stjA, host);
 			return stjA[ni];
-			
-
-		} catch (KeySizeException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		} catch (IllegalArgumentException e) {
-			// TODO Auto-generated catch block
+		} catch (KeySizeException | IllegalArgumentException e) {
 			e.printStackTrace();
 		}
 
-		return null;
+        return null;
 	}
 	
-	/**
-	 * 
-	 * @param host
-	 * @param inkt
-	 * @return
-	 */
-	private MicroState getClosestMic(MicroState host,KDTree<MicroState> inkt){
-		List<MicroState> stj;
-		try{
-			stj=inkt.nearest(host.getCenter(), 2);
-			assert(stj!=null);
-			MicroState a[]=new MicroState[1];
-			MicroState stjA[]=stj.toArray(a);
-			int ni=getNearestState(stjA,host);
-			return stjA[ni];
-		}catch (KeySizeException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		} catch (IllegalArgumentException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-		return null;
-	}
+//	private MicroState getClosestMic(MicroState host,KDTree<MicroState> inkt){
+//		List<MicroState> stj;
+//		try{
+//			stj=inkt.nearest(host.getCenter(), 2);
+//			assert(stj!=null);
+//			MicroState a[]=new MicroState[1];
+//			MicroState stjA[]=stj.toArray(a);
+//			int ni=getNearestState(stjA,host);
+//			return stjA[ni];
+//		}catch (KeySizeException | IllegalArgumentException e) {
+//			e.printStackTrace();
+//		}
+//        return null;
+//	}
 	
 	private int getNearestState(State[] stjA,State host){
 		for (int k = stjA.length - 1; k >= 0; k--) {
@@ -553,13 +456,6 @@ public class AgglomerativeCluster {
 		return -1;
 	}
 
-	/**
-	 * 
-	 * @param inMacs
-	 * @param inClosest
-	 * @param inkt
-	 * @return
-	 */
 	private MacroState Agglomeration(HashMap<Integer, MacroState> inMacs,
 			PQTuple inClosest, KDTree<MacroState> inkt) {
 
@@ -583,23 +479,16 @@ public class AgglomerativeCluster {
 
 			return com;
 
-		} catch (KeySizeException e) {
-			// TODO Auto-generated catch block
+		} catch (KeySizeException | KeyMissingException e) {
 			e.printStackTrace();
-		} catch (KeyMissingException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		} 
+		}
 
-		return null;
+        return null;
 
 	}
 	
 	/**
 	 * /insert into hashmap and k-d tree
-	 * @param ms
-	 * @param inMacs
-	 * @param inkt
 	 * @throws KeySizeException
 	 * @throws KeyMissingException
 	 */
@@ -613,15 +502,12 @@ public class AgglomerativeCluster {
 			inkt.insert(insertMac.getCenter(), insertMac);
 			}
 		} catch (KeyDuplicateException e) {
-			// TODO Auto-generated catch block
-			// e.printStackTrace();
 			MacroState ms0 = inkt.search(ms.getCenter());
 			inkt.delete(ms0.getCenter());
 			insertMac = new MacroState(Configuration.getStateId(), ms, ms0);
 			try {
 				inkt.insert(insertMac.getCenter(), insertMac);
 			} catch (KeyDuplicateException e1) {
-				// TODO Auto-generated catch block
 				e1.printStackTrace();
 			}
 		}
@@ -632,8 +518,6 @@ public class AgglomerativeCluster {
 	}
 	
 	/**
-	 * 
-	 * @param ms
 	 * @param inMacs: if it is null, just ignore it
 	 * @param inkt:if it is null, just ignore it
 	 * @throws KeySizeException
@@ -650,12 +534,6 @@ public class AgglomerativeCluster {
 	
 	
 	/**
-	 * 
-	 * @param ms
-	 * @param inMacs
-	 * @param insertHash
-	 * @param inkt
-	 * @param insertKT
 	 * @throws KeySizeException
 	 * @throws KeyMissingException
 	 */
@@ -678,10 +556,8 @@ public class AgglomerativeCluster {
 			}
 			insertMac = new MicroState(Configuration.getStateId(), ms, ms0);
 			try {
-				if(insertKT){
-				inkt.insert(insertMac.getCenter(), insertMac);
-				}
-			} catch (KeyDuplicateException e1) {
+                inkt.insert(insertMac.getCenter(), insertMac);
+            } catch (KeyDuplicateException e1) {
 				// TODO Auto-generated catch block
 				e1.printStackTrace();
 			}
@@ -698,7 +574,6 @@ public class AgglomerativeCluster {
 	 * @param inPqLow:
 	 * @param outPqHigh:
 	 * @param inR:  radius threshold
-	 * @return
 	 */
 	private PQTuple findMergable(HashMap<Integer, MacroState> inMacs,
 			PriorityQueue<PQTuple> inPqLow, PriorityQueue<PQTuple> outPqHigh,
@@ -733,16 +608,16 @@ public class AgglomerativeCluster {
 			invertPQTuple outInvertPQT, PriorityQueue<PQTuple> outPQ) {
 		try {
 			//create macro state for each micro state
-			for (int i = 0; i < mics.size(); i++) {
-				MacroState mac = new MacroState(Configuration.getStateId(),mics.get(i));//generate new state id
-				this.KDTreeHashInsertMac(mac, outMacs, outkt);//insert into map and k-d tree
-				//outkt.replaceInsert(mac.getCenter(), mac);//add it into k-d tree
-				//outMacs.put(mac.id, mac);
-			}
+            for (MicroState mic : mics) {
+                MacroState mac = new MacroState(Configuration.getStateId(), mic);//generate new state id
+                this.KDTreeHashInsertMac(mac, outMacs, outkt);//insert into map and k-d tree
+                //outkt.replaceInsert(mac.getCenter(), mac);//add it into k-d tree
+                //outMacs.put(mac.id, mac);
+            }
 
 			Collection<MacroState> values = outMacs.values();//all macro state
 			
-			if(null!=values&&values.size()>2){
+			if(values.size() > 2){
 			for (MacroState mac : values) {
 				
 				findNewTuple( mac, outkt,
@@ -750,251 +625,248 @@ public class AgglomerativeCluster {
 
 			}
 			}
-		} catch (KeySizeException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		} catch (KeyMissingException e) {
+		} catch (KeySizeException | KeyMissingException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
-	}
-	
-	public static StatesDendrogram  testCase1(){
-		Grid g=null;
-		AgglomerativeCluster ac=new AgglomerativeCluster(g);
-		
-		ArrayList<Entry<Long,GridLeafTraHashItem>> queryRes=new ArrayList<Entry<Long,GridLeafTraHashItem>>();
-		
-		HashMap<Long,GridLeafTraHashItem> hm=new HashMap<Long,GridLeafTraHashItem>();
-		
-		GridLeafTraHashItem gti[]=new GridLeafTraHashItem[27];
-		gti[0]=new GridLeafTraHashItem(2,2);
-		gti[1]=new GridLeafTraHashItem(2,3);
-		gti[2]=new GridLeafTraHashItem(2,4);
-		gti[3]=new GridLeafTraHashItem(2,5);
-		gti[4]=new GridLeafTraHashItem(3,2);
-		gti[5]=new GridLeafTraHashItem(3,3);
-		gti[6]=new GridLeafTraHashItem(3,4);
-		gti[7]=new GridLeafTraHashItem(3,5);
-		gti[8]=new GridLeafTraHashItem(4,2);
-		gti[9]=new GridLeafTraHashItem(4,3);
-		gti[10]=new GridLeafTraHashItem(4,4);
-		gti[11]=new GridLeafTraHashItem(4,5);
-		gti[12]=new GridLeafTraHashItem(5,2);
-		gti[13]=new GridLeafTraHashItem(5,3);
-		gti[14]=new GridLeafTraHashItem(5,4);
-		gti[15]=new GridLeafTraHashItem(5,5);
-		
-		gti[16]=new GridLeafTraHashItem(9,3);
-		gti[17]=new GridLeafTraHashItem(10,3);
-		gti[18]=new GridLeafTraHashItem(10,4);
-		gti[19]=new GridLeafTraHashItem(10,5);
-		gti[20]=new GridLeafTraHashItem(10,6);
-		gti[21]=new GridLeafTraHashItem(10,7);
-		gti[22]=new GridLeafTraHashItem(9,7);
-		
-		
-		gti[23]=new GridLeafTraHashItem(3,7);
-		gti[24]=new GridLeafTraHashItem(4,8);
-		gti[25]=new GridLeafTraHashItem(5,9);
-		gti[26]=new GridLeafTraHashItem(6,10);
-		
-		double sumx=0,sumy=0;
-		
-		for(int i=0;i<27;i++){
-			Long key= AlgorithmUtil.getKey(i, i);
-			hm.put(key, gti[i]);
-		}
-		
-		int start=16,end=26;
-		
-		for(int i=start;i<=end;i++){
-			sumx+=gti[i].getCellX();
-			sumy+=gti[i].getCellY();
-		}
-		sumx/=(end-start+1);
-		sumy/=(end-start+1);
-		
-		double radius=0;
-		for(int i=start;i<=end;i++){
-			double x=gti[i].getCellX();
-			double y=gti[i].getCellY();
-			
-			double r=(x-sumx)*(x-sumx)+(y-sumy)*(y-sumy);
-			
-			radius+=r;
-		}		
-		ArrayList<Entry<Long,GridLeafTraHashItem>> query=new ArrayList<Entry<Long,GridLeafTraHashItem>>(hm.entrySet());
-		//System.out.println(res.size());
-		query=new ArrayList<Entry<Long,GridLeafTraHashItem>>(hm.entrySet());
-		
-		return ac.getDendrogram(query, 2.58/4);
-		
-	}
-	
-	
-	public static StatesDendrogram  testCase2(){
-		Grid g=null;
-		AgglomerativeCluster ac=new AgglomerativeCluster(g);
-		
-		ArrayList<Entry<Long,GridLeafTraHashItem>> queryRes=new ArrayList<Entry<Long,GridLeafTraHashItem>>();
-		
-		HashMap<Long,GridLeafTraHashItem> hm=new HashMap<Long,GridLeafTraHashItem>();
-		
-		GridLeafTraHashItem gti[]=new GridLeafTraHashItem[27];
-		gti[0]=new GridLeafTraHashItem(2,2);
-		gti[1]=new GridLeafTraHashItem(2,3);
-		gti[2]=new GridLeafTraHashItem(2,4);
-		gti[3]=new GridLeafTraHashItem(2,5);
-		gti[4]=new GridLeafTraHashItem(3,2);
-		gti[5]=new GridLeafTraHashItem(3,3);
-		gti[6]=new GridLeafTraHashItem(3,4);
-		gti[7]=new GridLeafTraHashItem(3,5);
-		gti[8]=new GridLeafTraHashItem(4,2);
-		gti[9]=new GridLeafTraHashItem(4,3);
-		gti[10]=new GridLeafTraHashItem(4,4);
-		gti[11]=new GridLeafTraHashItem(4,5);
-		gti[12]=new GridLeafTraHashItem(5,2);
-		gti[13]=new GridLeafTraHashItem(5,3);
-		gti[14]=new GridLeafTraHashItem(5,4);
-		gti[15]=new GridLeafTraHashItem(5,5);
-		
-		gti[16]=new GridLeafTraHashItem(9,1);
-		gti[17]=new GridLeafTraHashItem(10,1);
-		gti[18]=new GridLeafTraHashItem(10,2);
-		gti[19]=new GridLeafTraHashItem(10,3);
-		
-		gti[20]=new GridLeafTraHashItem(10,7);
-		gti[21]=new GridLeafTraHashItem(10,8);
-		gti[22]=new GridLeafTraHashItem(9,8);
-		
-		
-		gti[23]=new GridLeafTraHashItem(3,7);
-		gti[24]=new GridLeafTraHashItem(4,8);
-		gti[25]=new GridLeafTraHashItem(5,9);
-		gti[26]=new GridLeafTraHashItem(6,10);
-		
-		double sumx=0,sumy=0;
-		
-		for(int i=0;i<27;i++){
-			Long key=AlgorithmUtil.getKey(i, i);
-			hm.put(key, gti[i]);
-
-		}
-		
-		int start=16,end=26;
-		
-		for(int i=start;i<=end;i++){
-			sumx+=gti[i].getCellX();
-			sumy+=gti[i].getCellY();
-		}
-		sumx/=(end-start+1);
-		sumy/=(end-start+1);
-		
-		double radius=0;
-		for(int i=start;i<=end;i++){
-			double x=gti[i].getCellX();
-			double y=gti[i].getCellY();
-			
-			double r=(x-sumx)*(x-sumx)+(y-sumy)*(y-sumy);
-			
-			radius+=r;
-		}		
-		ArrayList<Entry<Long,GridLeafTraHashItem>> query=new ArrayList<Entry<Long,GridLeafTraHashItem>>(hm.entrySet());
-		//System.out.println(res.size());
-		query=new ArrayList<Entry<Long,GridLeafTraHashItem>>(hm.entrySet());
-		
-		return ac.getDendrogram(query, 2.58/4);
-		
-	}
-	
-	public static void main(String args[]){
-		Grid g=null;
-		AgglomerativeCluster ac=new AgglomerativeCluster(g);
-		
-		ArrayList<Entry<Long,GridLeafTraHashItem>> queryRes=new ArrayList<Entry<Long,GridLeafTraHashItem>>();
-		
-		HashMap<Long,GridLeafTraHashItem> hm=new HashMap<Long,GridLeafTraHashItem>();
-		
-		GridLeafTraHashItem gti[]=new GridLeafTraHashItem[27];
-		gti[0]=new GridLeafTraHashItem(2,2);
-		gti[1]=new GridLeafTraHashItem(2,3);
-		gti[2]=new GridLeafTraHashItem(2,4);
-		gti[3]=new GridLeafTraHashItem(2,5);
-		gti[4]=new GridLeafTraHashItem(3,2);
-		gti[5]=new GridLeafTraHashItem(3,3);
-		gti[6]=new GridLeafTraHashItem(3,4);
-		gti[7]=new GridLeafTraHashItem(3,5);
-		gti[8]=new GridLeafTraHashItem(4,2);
-		gti[9]=new GridLeafTraHashItem(4,3);
-		gti[10]=new GridLeafTraHashItem(4,4);
-		gti[11]=new GridLeafTraHashItem(4,5);
-		gti[12]=new GridLeafTraHashItem(5,2);
-		gti[13]=new GridLeafTraHashItem(5,3);
-		gti[14]=new GridLeafTraHashItem(5,4);
-		gti[15]=new GridLeafTraHashItem(5,5);
-		
-		gti[16]=new GridLeafTraHashItem(9,3);
-		gti[17]=new GridLeafTraHashItem(10,3);
-		gti[18]=new GridLeafTraHashItem(10,4);
-		gti[19]=new GridLeafTraHashItem(10,5);
-		gti[20]=new GridLeafTraHashItem(10,6);
-		gti[21]=new GridLeafTraHashItem(10,7);
-		gti[22]=new GridLeafTraHashItem(9,7);
-		
-		
-		gti[23]=new GridLeafTraHashItem(3,7);
-		gti[24]=new GridLeafTraHashItem(4,8);
-		gti[25]=new GridLeafTraHashItem(5,9);
-		gti[26]=new GridLeafTraHashItem(6,10);
-		
-		double sumx=0,sumy=0;
-		
-		for(int i=0;i<27;i++){
-			Long key=AlgorithmUtil.getKey(Configuration.getStateId(), i);
-			hm.put(key, gti[i]);
-
-		}
-		
-		int start=16,end=26;
-		
-		for(int i=start;i<=end;i++){
-			sumx+=gti[i].getCellX();
-			sumy+=gti[i].getCellY();
-		}
-		sumx/=(end-start+1);
-		sumy/=(end-start+1);
-		
-		double radius=0;
-		for(int i=start;i<=end;i++){
-			double x=gti[i].getCellX();
-			double y=gti[i].getCellY();
-			
-			double r=(x-sumx)*(x-sumx)+(y-sumy)*(y-sumy);
-			
-			radius+=r;
-		}
-		
-		System.out.println(""+Math.sqrt(radius/27));
-		
-		
-		ArrayList<Entry<Long,GridLeafTraHashItem>> query=new ArrayList<Entry<Long,GridLeafTraHashItem>>(hm.entrySet());
-		
-		ArrayList<MicroState> res=ac.InitialMicroState(query, Math.sqrt(2)*2);
-		System.out.println(res.get(0).getDisCenter(res.get(1)));
-		System.out.println(res.get(1).getDisCenter(res.get(2)));
-
-		System.out.println(res.get(0).getDisCenter(res.get(2)));
-		
-		System.out.println(MacroState.getRadius(res.get(0), res.get(1)));
-		System.out.println(MacroState.getRadius(res.get(1), res.get(2)));
-		
-		//System.out.println(res.size());
-		query=new ArrayList<Entry<Long,GridLeafTraHashItem>>(hm.entrySet());
-		
-		//ArrayList<ArrayList<MacroState>> macRes=ac.getDendrogram(query, 2.58/2);
-		StatesDendrogram sd=ac.getDendrogram(query, 2.59/4);
-		System.out.println(sd.macsTree.size());
-	}
-	
+    }
+//
+//	public static StatesDendrogram  testCase1(){
+//		Grid g=null;
+//		AgglomerativeCluster ac=new AgglomerativeCluster(g);
+//
+//		ArrayList<Entry<Long,GridLeafTraHashItem>> queryRes=new ArrayList<Entry<Long,GridLeafTraHashItem>>();
+//
+//		HashMap<Long,GridLeafTraHashItem> hm=new HashMap<Long,GridLeafTraHashItem>();
+//
+//		GridLeafTraHashItem gti[]=new GridLeafTraHashItem[27];
+//		gti[0]=new GridLeafTraHashItem(2,2);
+//		gti[1]=new GridLeafTraHashItem(2,3);
+//		gti[2]=new GridLeafTraHashItem(2,4);
+//		gti[3]=new GridLeafTraHashItem(2,5);
+//		gti[4]=new GridLeafTraHashItem(3,2);
+//		gti[5]=new GridLeafTraHashItem(3,3);
+//		gti[6]=new GridLeafTraHashItem(3,4);
+//		gti[7]=new GridLeafTraHashItem(3,5);
+//		gti[8]=new GridLeafTraHashItem(4,2);
+//		gti[9]=new GridLeafTraHashItem(4,3);
+//		gti[10]=new GridLeafTraHashItem(4,4);
+//		gti[11]=new GridLeafTraHashItem(4,5);
+//		gti[12]=new GridLeafTraHashItem(5,2);
+//		gti[13]=new GridLeafTraHashItem(5,3);
+//		gti[14]=new GridLeafTraHashItem(5,4);
+//		gti[15]=new GridLeafTraHashItem(5,5);
+//
+//		gti[16]=new GridLeafTraHashItem(9,3);
+//		gti[17]=new GridLeafTraHashItem(10,3);
+//		gti[18]=new GridLeafTraHashItem(10,4);
+//		gti[19]=new GridLeafTraHashItem(10,5);
+//		gti[20]=new GridLeafTraHashItem(10,6);
+//		gti[21]=new GridLeafTraHashItem(10,7);
+//		gti[22]=new GridLeafTraHashItem(9,7);
+//
+//
+//		gti[23]=new GridLeafTraHashItem(3,7);
+//		gti[24]=new GridLeafTraHashItem(4,8);
+//		gti[25]=new GridLeafTraHashItem(5,9);
+//		gti[26]=new GridLeafTraHashItem(6,10);
+//
+//		double sumx=0,sumy=0;
+//
+//		for(int i=0;i<27;i++){
+//			Long key= AlgorithmUtil.getKey(i, i);
+//			hm.put(key, gti[i]);
+//		}
+//
+//		int start=16,end=26;
+//
+//		for(int i=start;i<=end;i++){
+//			sumx+=gti[i].getCellX();
+//			sumy+=gti[i].getCellY();
+//		}
+//		sumx/=(end-start+1);
+//		sumy/=(end-start+1);
+//
+//		double radius=0;
+//		for(int i=start;i<=end;i++){
+//			double x=gti[i].getCellX();
+//			double y=gti[i].getCellY();
+//
+//			double r=(x-sumx)*(x-sumx)+(y-sumy)*(y-sumy);
+//
+//			radius+=r;
+//		}
+//		ArrayList<Entry<Long,GridLeafTraHashItem>> query=new ArrayList<Entry<Long,GridLeafTraHashItem>>(hm.entrySet());
+//		//System.out.println(res.size());
+//		query=new ArrayList<Entry<Long,GridLeafTraHashItem>>(hm.entrySet());
+//
+//		return ac.getDendrogram(query, 2.58/4);
+//
+//	}
+//
+//
+//	public static StatesDendrogram  testCase2(){
+//		Grid g=null;
+//		AgglomerativeCluster ac=new AgglomerativeCluster(g);
+//
+//		ArrayList<Entry<Long,GridLeafTraHashItem>> queryRes=new ArrayList<Entry<Long,GridLeafTraHashItem>>();
+//
+//		HashMap<Long,GridLeafTraHashItem> hm=new HashMap<Long,GridLeafTraHashItem>();
+//
+//		GridLeafTraHashItem gti[]=new GridLeafTraHashItem[27];
+//		gti[0]=new GridLeafTraHashItem(2,2);
+//		gti[1]=new GridLeafTraHashItem(2,3);
+//		gti[2]=new GridLeafTraHashItem(2,4);
+//		gti[3]=new GridLeafTraHashItem(2,5);
+//		gti[4]=new GridLeafTraHashItem(3,2);
+//		gti[5]=new GridLeafTraHashItem(3,3);
+//		gti[6]=new GridLeafTraHashItem(3,4);
+//		gti[7]=new GridLeafTraHashItem(3,5);
+//		gti[8]=new GridLeafTraHashItem(4,2);
+//		gti[9]=new GridLeafTraHashItem(4,3);
+//		gti[10]=new GridLeafTraHashItem(4,4);
+//		gti[11]=new GridLeafTraHashItem(4,5);
+//		gti[12]=new GridLeafTraHashItem(5,2);
+//		gti[13]=new GridLeafTraHashItem(5,3);
+//		gti[14]=new GridLeafTraHashItem(5,4);
+//		gti[15]=new GridLeafTraHashItem(5,5);
+//
+//		gti[16]=new GridLeafTraHashItem(9,1);
+//		gti[17]=new GridLeafTraHashItem(10,1);
+//		gti[18]=new GridLeafTraHashItem(10,2);
+//		gti[19]=new GridLeafTraHashItem(10,3);
+//
+//		gti[20]=new GridLeafTraHashItem(10,7);
+//		gti[21]=new GridLeafTraHashItem(10,8);
+//		gti[22]=new GridLeafTraHashItem(9,8);
+//
+//
+//		gti[23]=new GridLeafTraHashItem(3,7);
+//		gti[24]=new GridLeafTraHashItem(4,8);
+//		gti[25]=new GridLeafTraHashItem(5,9);
+//		gti[26]=new GridLeafTraHashItem(6,10);
+//
+//		double sumx=0,sumy=0;
+//
+//		for(int i=0;i<27;i++){
+//			Long key=AlgorithmUtil.getKey(i, i);
+//			hm.put(key, gti[i]);
+//
+//		}
+//
+//		int start=16,end=26;
+//
+//		for(int i=start;i<=end;i++){
+//			sumx+=gti[i].getCellX();
+//			sumy+=gti[i].getCellY();
+//		}
+//		sumx/=(end-start+1);
+//		sumy/=(end-start+1);
+//
+//		double radius=0;
+//		for(int i=start;i<=end;i++){
+//			double x=gti[i].getCellX();
+//			double y=gti[i].getCellY();
+//
+//			double r=(x-sumx)*(x-sumx)+(y-sumy)*(y-sumy);
+//
+//			radius+=r;
+//		}
+//		ArrayList<Entry<Long,GridLeafTraHashItem>> query=new ArrayList<Entry<Long,GridLeafTraHashItem>>(hm.entrySet());
+//		//System.out.println(res.size());
+//		query=new ArrayList<Entry<Long,GridLeafTraHashItem>>(hm.entrySet());
+//
+//		return ac.getDendrogram(query, 2.58/4);
+//
+//	}
+//
+//	public static void main(String args[]){
+//		Grid g=null;
+//		AgglomerativeCluster ac=new AgglomerativeCluster(g);
+//
+//		ArrayList<Entry<Long,GridLeafTraHashItem>> queryRes=new ArrayList<Entry<Long,GridLeafTraHashItem>>();
+//
+//		HashMap<Long,GridLeafTraHashItem> hm=new HashMap<Long,GridLeafTraHashItem>();
+//
+//		GridLeafTraHashItem gti[]=new GridLeafTraHashItem[27];
+//		gti[0]=new GridLeafTraHashItem(2,2);
+//		gti[1]=new GridLeafTraHashItem(2,3);
+//		gti[2]=new GridLeafTraHashItem(2,4);
+//		gti[3]=new GridLeafTraHashItem(2,5);
+//		gti[4]=new GridLeafTraHashItem(3,2);
+//		gti[5]=new GridLeafTraHashItem(3,3);
+//		gti[6]=new GridLeafTraHashItem(3,4);
+//		gti[7]=new GridLeafTraHashItem(3,5);
+//		gti[8]=new GridLeafTraHashItem(4,2);
+//		gti[9]=new GridLeafTraHashItem(4,3);
+//		gti[10]=new GridLeafTraHashItem(4,4);
+//		gti[11]=new GridLeafTraHashItem(4,5);
+//		gti[12]=new GridLeafTraHashItem(5,2);
+//		gti[13]=new GridLeafTraHashItem(5,3);
+//		gti[14]=new GridLeafTraHashItem(5,4);
+//		gti[15]=new GridLeafTraHashItem(5,5);
+//
+//		gti[16]=new GridLeafTraHashItem(9,3);
+//		gti[17]=new GridLeafTraHashItem(10,3);
+//		gti[18]=new GridLeafTraHashItem(10,4);
+//		gti[19]=new GridLeafTraHashItem(10,5);
+//		gti[20]=new GridLeafTraHashItem(10,6);
+//		gti[21]=new GridLeafTraHashItem(10,7);
+//		gti[22]=new GridLeafTraHashItem(9,7);
+//
+//
+//		gti[23]=new GridLeafTraHashItem(3,7);
+//		gti[24]=new GridLeafTraHashItem(4,8);
+//		gti[25]=new GridLeafTraHashItem(5,9);
+//		gti[26]=new GridLeafTraHashItem(6,10);
+//
+//		double sumx=0,sumy=0;
+//
+//		for(int i=0;i<27;i++){
+//			Long key=AlgorithmUtil.getKey(Configuration.getStateId(), i);
+//			hm.put(key, gti[i]);
+//
+//		}
+//
+//		int start=16,end=26;
+//
+//		for(int i=start;i<=end;i++){
+//			sumx+=gti[i].getCellX();
+//			sumy+=gti[i].getCellY();
+//		}
+//		sumx/=(end-start+1);
+//		sumy/=(end-start+1);
+//
+//		double radius=0;
+//		for(int i=start;i<=end;i++){
+//			double x=gti[i].getCellX();
+//			double y=gti[i].getCellY();
+//
+//			double r=(x-sumx)*(x-sumx)+(y-sumy)*(y-sumy);
+//
+//			radius+=r;
+//		}
+//
+//		System.out.println(""+Math.sqrt(radius/27));
+//
+//
+//		ArrayList<Entry<Long,GridLeafTraHashItem>> query=new ArrayList<Entry<Long,GridLeafTraHashItem>>(hm.entrySet());
+//
+//		ArrayList<MicroState> res=ac.InitialMicroState(query, Math.sqrt(2)*2);
+//		System.out.println(res.get(0).getDisCenter(res.get(1)));
+//		System.out.println(res.get(1).getDisCenter(res.get(2)));
+//
+//		System.out.println(res.get(0).getDisCenter(res.get(2)));
+//
+//		System.out.println(MacroState.getRadius(res.get(0), res.get(1)));
+//		System.out.println(MacroState.getRadius(res.get(1), res.get(2)));
+//
+//		//System.out.println(res.size());
+//		query=new ArrayList<Entry<Long,GridLeafTraHashItem>>(hm.entrySet());
+//
+//		//ArrayList<ArrayList<MacroState>> macRes=ac.getDendrogram(query, 2.58/2);
+//		StatesDendrogram sd=ac.getDendrogram(query, 2.59/4);
+//		System.out.println(sd.getMacsTree().size());
+//	}
+//
 }

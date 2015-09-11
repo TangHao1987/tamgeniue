@@ -4,8 +4,8 @@ import java.util.ArrayList;
 
 public class StatesDendrogram {
 	
-	ArrayList<MicroState> micsLevel;
-	ArrayList<ArrayList<MacroState>> macsTree;
+	private ArrayList<MicroState> micsLevel;
+    private ArrayList<ArrayList<MacroState>> macsTree;
 	
 	
 	public StatesDendrogram(ArrayList<MicroState> inMicsLevel,ArrayList<ArrayList<MacroState>> inMacsTree){
@@ -13,4 +13,11 @@ public class StatesDendrogram {
 		macsTree=inMacsTree;
 	}
 
+    public ArrayList<MicroState> getMicsLevel() {
+        return micsLevel;
+    }
+
+    public ArrayList<ArrayList<MacroState>> getMacsTree() {
+        return macsTree;
+    }
 }

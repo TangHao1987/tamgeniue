@@ -27,16 +27,8 @@ public class GridLeafEntry {
         return traHash;
     }
 
-    public void setTraHash(LinkedHashMap<Long, GridLeafTraHashItem> traHash) {
-        this.traHash = traHash;
-    }
-
     public ArrayList<PageStartTimeItem> getPageStartTimes() {
         return pageStartTimes;
-    }
-
-    public void setPageStartTimes(ArrayList<PageStartTimeItem> pageStartTimes) {
-        this.pageStartTimes = pageStartTimes;
     }
 
     public void addPageStartTime(int id){
@@ -60,18 +52,6 @@ public class GridLeafEntry {
 
     public int getCurPageStartTime() {
         return curPageStartTime;
-    }
-
-    public void setCurPageStartTime(int curPageStartTime) {
-        this.curPageStartTime = curPageStartTime;
-    }
-
-    public int getCurTime() {
-        return curTime;
-    }
-
-    public void setCurTime(int curTime) {
-        this.curTime = curTime;
     }
 
     public int getCountIO() {

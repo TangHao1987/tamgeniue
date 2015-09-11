@@ -14,8 +14,6 @@ import java.util.ArrayList;
  */
 public class GFStatesItem {
 	ArrayList<MacroState> macs;
-	
-	
 	double[] w;//weight of each states
 	double[][] P_x_k_x_k_1;//probablity from x_k-1^i to x_k^j
 	double [] P_z_k_x_k;//under th state x_k, the probablity of z_k( observation)
@@ -33,7 +31,6 @@ public class GFStatesItem {
 	 * add the macro state into the Item. However, other useful information still is empty
 	 * 1).compute the total number of trajectories for prediction
 	 * 2).compute beta
-	 * @param inMacs
 	 */
 	public void addMacStates(ArrayList<MacroState> inMacs){
 		macs=inMacs;
@@ -43,7 +40,6 @@ public class GFStatesItem {
 	}
 	
 	/**
-	 * 
 	 * @param in_p_x_k_x_k_1: //probablity from x_k-1^i to x_k^j
 	 * @param in_p_z_k_x_k: //under th state x_k, the probablity of z_k( observation)
 	 */
@@ -56,7 +52,6 @@ public class GFStatesItem {
 	
 	/**
 	 * weight of each states
-	 * @param inW
 	 */
 	public void addGFW(double [] inW){
 		w=inW;
@@ -66,23 +61,19 @@ public class GFStatesItem {
 	
 	/**
 	 * test wether this item is good enough for our prediction. Currently, the 
-	 * condition is at least one state has weight whichi is larger than p.
-	 * @param p
-	 * @return
+	 * condition is at least one state has weight which is larger than p.
 	 */
 	public boolean statCondition(double p){
 		assert(addCount==3);
-		
-		for(int i=0;i<w.length;i++){
-			if(w[i]>=p) return true;
-		}
+        for (double aW : w) {
+            if (aW >= p) return true;
+        }
 		
 		return false;
 	}
 	
 	/**
-	 * all the number of trajectories for prediction 
-	 * @return
+	 * all the number of trajectories for prediction
 	 */
 	private int compTraSumNum(){
 		int sum=0;
@@ -94,7 +85,6 @@ public class GFStatesItem {
 
 	/**
 	 * compute beta
-	 * @return
 	 */
 	private double[] compBeta(){
 		double[] beta_i=new double[macs.size()];
@@ -114,48 +104,30 @@ public class GFStatesItem {
 		return beta_i;
 	}
 	
-	/**
-	 * 
-	 * @return
-	 */
 	public int getStateNum(){
 		return macs.size();
 	}
 	
-	/**
-	 * 
-	 * @param i
-	 * @return
-	 */
 	public MacroState getState(int i){
 		return macs.get(i);
 	}
-	
-	/**
-	 * 
-	 * @return
-	 */
+
 	public int getTraSumNum(){
 		return traSumNum;
 	}
 	
 	public double getTraSumLifetime(){
 		double lifetimeSum=0;
-		for(int i=0;i<macs.size();i++){
-			lifetimeSum+=macs.get(i).getStateTraLifetime();
-		}
+        for (MacroState mac : macs) {
+            lifetimeSum += mac.getStateTraLifetime();
+        }
 		return lifetimeSum;
 	}
 	
 	public double getTraLifetimePerState(int i){
 		return macs.get(i).getStateTraLifetime();
 	}
-	
-	/**
-	 * 
-	 * @param i
-	 * @return
-	 */
+
 	public int getTraNumPerState(int i){
 		return macs.get(i).LT.size();
 	}

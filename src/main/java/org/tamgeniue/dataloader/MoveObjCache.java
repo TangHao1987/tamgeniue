@@ -1,32 +1,36 @@
-package org.tamgeniue.grid;
+package org.tamgeniue.dataloader;
 
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
+import org.tamgeniue.grid.Configuration;
+import org.tamgeniue.grid.GridConverter;
 import org.tamgeniue.model.grid.Grid;
-import org.tamgeniue.model.Point;
 import org.tamgeniue.model.roi.RoICell;
+import java.awt.geom.Point2D;
 
 import java.util.ArrayList;
 import java.util.HashMap;
 @Component
-public class MoveObjCacheBBFOld {
+public class MoveObjCache {
 	
 	private HashMap<Integer,MOTuple> moc = new HashMap<>();
     private HashMap<Integer,ArrayList<RoICell>> sampleGridHashList=null;
-    private HashMap<Integer,ArrayList<Point>> sampleLocHashList=null;
+    private HashMap<Integer,ArrayList<Point2D>> sampleLocHashList=null;
     private int sampleLen=-1;
-    private Grid grid=null;
+
+    @Autowired
+    private Grid grid;
     private int sampleStartTime= -1;
     private int sampleEndTime= -1;
 
     @Autowired
     private GridConverter gridConverter;
 
-    public MoveObjCacheBBFOld(){
+    public MoveObjCache(){
 
     }
-	public MoveObjCacheBBFOld(Grid inGrid){
+	public void init(Grid inGrid){
 		grid=inGrid;
 	}
 	
@@ -36,7 +40,7 @@ public class MoveObjCacheBBFOld {
         sampleLocHashList=new HashMap<>();
         for(int i:sa){
             sampleGridHashList.put(i, new ArrayList<RoICell>());
-            sampleLocHashList.put(i, new ArrayList<Point>());
+            sampleLocHashList.put(i, new ArrayList<Point2D>());
         }
 		sampleStartTime=inStartTime;
 		sampleEndTime=inEndTime;
@@ -59,12 +63,13 @@ public class MoveObjCacheBBFOld {
 		}
 	}
 	
-	public void insertSampleLoc(Point loc1, int traId){
+	public void insertSampleLoc(Point2D loc1, int traId){
 		if(null==sampleLocHashList) return;
-		ArrayList<Point> locItem=sampleLocHashList.get(traId);
+		ArrayList<Point2D> locItem=sampleLocHashList.get(traId);
 		if(null!=locItem){
 			if(locItem.size()<this.sampleLen){
-				locItem.add(new Point(loc1.getX(),loc1.getY()));
+				locItem.add(new Point2D.Double(loc1.getX(), loc1.getY()) {
+                });
 			}
 		}
 	}
@@ -81,8 +86,8 @@ public class MoveObjCacheBBFOld {
 
 
             if (ti >= Configuration.T_Sample) {
-				double lat2=0,lng2=0,lat1=0,lng1=0;
-				int t2=0,t1=0;
+				double lat2=0,lng2=0,lat1,lng1;
+				int t2=0,t1;
 
 				lat1=moTuple.getLat();
 				lng1=moTuple.getLng();
@@ -110,7 +115,7 @@ public class MoveObjCacheBBFOld {
 				if(this.sampleStartTime==-1||this.sampleEndTime==-1||(t1>=sampleStartTime&&t1<=sampleEndTime)){
 				insertSampleGrid( p1, inTraId);
 
-				Point loc1=new Point(inLat,inLng);
+				Point2D loc1=new Point2D.Double(inLat,inLng);
 				insertSampleLoc(loc1,inTraId);
 				}
 
@@ -130,7 +135,7 @@ public class MoveObjCacheBBFOld {
 		return this.sampleGridHashList;
 	}
 	
-	public HashMap<Integer,ArrayList<Point>> getLocSampleHashList(){
+	public HashMap<Integer,ArrayList<Point2D>> getLocSampleHashList(){
 		return this.sampleLocHashList;
 	}
 	

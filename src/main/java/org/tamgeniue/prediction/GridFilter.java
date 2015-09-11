@@ -12,11 +12,7 @@ import java.util.Hashtable;
 //import utl.fastbinomial.FastBinomial;
 
 public class GridFilter {
-	private Grid grid;// grid
-	
-	// the query result of historical trajectories by recent trajectory
-	private Hashtable<Integer, ArrayList<TraStoreListItem>> queryResult = null;
-	
+
     public TimeTraState timeTraState=null;
 	
     private double[] p_z;
@@ -30,7 +26,7 @@ public class GridFilter {
     private double MAPPro;
 
 
-    private double alphaJ_k_k_1=0.1;//the weight for J_k_k_1, while (1-alphaJ_k_k_1) is the weight of C_k_k_1
+    private static final double alphaJ_k_k_1=0.1;//the weight for J_k_k_1, while (1-alphaJ_k_k_1) is the weight of C_k_k_1
 
 
 	/**
@@ -38,14 +34,10 @@ public class GridFilter {
 	public GridFilter(Grid inGrid,
 			Hashtable<Integer, ArrayList<TraStoreListItem>> inQueryResult,
 			double inLat0, double inLng0, double inStep) {
-		grid = inGrid;
-		queryResult = inQueryResult;
 
         timeTraState=new TimeTraState(inGrid, inQueryResult,
 			 inLat0,  inLng0,  inStep);
-		
-	
-		
+
 		//long startComP_Z=System.currentTimeMillis(); //��ȡ��ʼʱ��
 		compP_Z();
 		//long endComP_Z=System.currentTimeMillis();
@@ -139,11 +131,6 @@ public class GridFilter {
 	}
 	
 	/**
-	 * 
-	 * @param k
-	 * @param ki
-	 * @param k_1j
-	 * @return
 	 */
 	private double C_XK_XK_1(int k,int ki,int k_1j){
 		
@@ -212,18 +199,12 @@ public class GridFilter {
 	
 	/**
 	 * k starts from 1
-	 * @param k
-	 * @return
 	 */
 	private double getP_Z_K(int k){
 		return p_z[k];
 	}
 	
 	/**
-	 * 
-	 * @param k
-	 * @param i
-	 * @return
 	 */
 	private double P_X_ki(int k,int i){
 		return timeTraState.getBeta_k_j(k, i);
@@ -231,9 +212,6 @@ public class GridFilter {
 	
 	/**
 	 * compute p(z_k|x_ki), return an array, and n is the number of states
-	 * @param k
-	 * @param n
-	 * @return
 	 */
 	private double[] P_Z_k_X_ki(int k,int n){
 		double [] res=new double[n];
@@ -252,9 +230,6 @@ public class GridFilter {
 	
 	/**
 	 * Compute p(z_k|x_ki), without normalization
-	 * @param k
-	 * @param i
-	 * @return
 	 */
 	public double P_Z_k_X_kiPropto(int k, int i){
 		
@@ -280,12 +255,8 @@ public class GridFilter {
 		}
 		
 	}
-	
-	/**
-	 * 
-	 * @param k
-	 */
-	private void comW_kkItem(int k){
+
+    private void comW_kkItem(int k){
 		w_kk[k]=new double[timeTraState.getStateNum(k)];
 		
 		double[] w_k_k_1=W_k_k_1Item(k);
@@ -305,13 +276,6 @@ public class GridFilter {
 		}	
 	}
 		
-	/**
-	 * 
-	 * @param k
-	 * @param i
-	 * @param p_x_k_x_k_1
-	 * @return
-	 */
 	private double W_k_k_1_i_Item(int k,int i,double [][] p_x_k_x_k_1){
 		
 		int n_k_1_s;
@@ -378,7 +342,6 @@ public class GridFilter {
 	
 	/**
 	 * the recursion part of MAP
-	 * @param k
 	 * @return return the maximum probability of the path at current timestamp k
 	 */
 	public double MAPRecursion(int k){

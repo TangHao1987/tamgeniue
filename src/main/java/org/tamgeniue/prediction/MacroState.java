@@ -17,7 +17,6 @@ public class MacroState extends State{
 	
 	/**
 	 * merge two state
-	 * @param ms
 	 */
 	public void addMacroState(State ms){
 		super.addState(ms);
