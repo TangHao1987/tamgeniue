@@ -54,8 +54,7 @@ public class Predictor {
 	}
 
 
-	private  StateGridFilter PathPrediction(
-			ArrayList<Entry<Long, GridLeafTraHashItem>> startSet, Grid grid,
+	private  StateGridFilter PathPrediction(ArrayList<Entry<Long, GridLeafTraHashItem>> startSet, Grid grid,
 			double p, double minDelta, double r,int pathMaxLen, ArrayList<StatesDendrogram> outSDList){
 		int time_k = 0;// count the future time
 		StateGridFilter sgf = new StateGridFilter();//

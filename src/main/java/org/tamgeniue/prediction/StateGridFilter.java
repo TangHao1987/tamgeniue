@@ -268,63 +268,63 @@ public class StateGridFilter {
 		return (cat_inter/cat_union);
 		
 	}
-	
-	public static void testCase1(){
-		
-		StatesDendrogram sd=AgglomerativeCluster.testCase1();
-		ArrayList<ArrayList<MacroState>> acRes1=sd.macsTree;
-		StateGridFilter sGF=new StateGridFilter();
-		GFStatesItem first= sGF.GenerateGFState(acRes1,0.5,1);
-		System.out.println(first.macs.size());
-		
-		System.out.println(first.toSring());
-	}
-	
-	public static void  testCase2(){
-		StatesDendrogram sd1=AgglomerativeCluster.testCase1();
-		ArrayList<ArrayList<MacroState>> acRes1=sd1.macsTree;
-		StateGridFilter sGF=new StateGridFilter();
-		GFStatesItem first= sGF.GenerateGFState(acRes1,0.5,1);
-		sGF.gfStates.addStatesItem(first);
-		//System.out.println(first.macs.size());
-		
-		StatesDendrogram sd2=AgglomerativeCluster.testCase2();
-		ArrayList<ArrayList<MacroState>> acRes2=sd2.macsTree;
-		//System.out.println(acRes2.get(1).size());
-		
-		GFStatesItem sec= sGF.GenerateGFState(acRes2,0.8,2);
-		
-	     sGF.gfStates.addStatesItem(sec);
-		
-		System.out.println("MAP:"+sGF.gfStates.max_delta);
-		
-		int[] path=sGF.gfStates.MAPTraceBack();
-		
-		System.out.println("path");
-        for (int aPath : path) {
-            System.out.println(aPath);
-        }
-		
-		ArrayList<MacroState> mp=sGF.gfStates.getMacroStatePath();
-		System.out.println("Macro state path");
-		for(int i=1;i<mp.size();i++){
-			System.out.println(mp.get(i).getCenter()[0]+" "+mp.get(i).getCenter()[1]);
-		}
-		
-		System.out.println("first");
-		System.out.println(first.toSring());
-		
-		System.out.println("second");
-		System.out.println(sec.toSring());
-	}
-	//====================================================
-	
-	
-	
-	public static void main(String args[]){
-		testCase1();
-		testCase2();
-	}
+//
+//	public static void testCase1(){
+//
+//		StatesDendrogram sd=AgglomerativeCluster.testCase1();
+//		ArrayList<ArrayList<MacroState>> acRes1=sd.macsTree;
+//		StateGridFilter sGF=new StateGridFilter();
+//		GFStatesItem first= sGF.GenerateGFState(acRes1,0.5,1);
+//		System.out.println(first.macs.size());
+//
+//		System.out.println(first.toSring());
+//	}
+//
+//	public static void  testCase2(){
+//		StatesDendrogram sd1=AgglomerativeCluster.testCase1();
+//		ArrayList<ArrayList<MacroState>> acRes1=sd1.getMacsTree();
+//		StateGridFilter sGF=new StateGridFilter();
+//		GFStatesItem first= sGF.GenerateGFState(acRes1,0.5,1);
+//		sGF.gfStates.addStatesItem(first);
+//		//System.out.println(first.macs.size());
+//
+//		StatesDendrogram sd2=AgglomerativeCluster.testCase2();
+//		ArrayList<ArrayList<MacroState>> acRes2=sd2.getMacsTree();
+//		//System.out.println(acRes2.get(1).size());
+//
+//		GFStatesItem sec= sGF.GenerateGFState(acRes2,0.8,2);
+//
+//	     sGF.gfStates.addStatesItem(sec);
+//
+//		System.out.println("MAP:"+sGF.gfStates.max_delta);
+//
+//		int[] path=sGF.gfStates.MAPTraceBack();
+//
+//		System.out.println("path");
+//        for (int aPath : path) {
+//            System.out.println(aPath);
+//        }
+//
+//		ArrayList<MacroState> mp=sGF.gfStates.getMacroStatePath();
+//		System.out.println("Macro state path");
+//		for(int i=1;i<mp.size();i++){
+//			System.out.println(mp.get(i).getCenter()[0]+" "+mp.get(i).getCenter()[1]);
+//		}
+//
+//		System.out.println("first");
+//		System.out.println(first.toSring());
+//
+//		System.out.println("second");
+//		System.out.println(sec.toSring());
+//	}
+//	//====================================================
+//
+//
+//
+//	public static void main(String args[]){
+//		testCase1();
+//		testCase2();
+//	}
 }
 
 

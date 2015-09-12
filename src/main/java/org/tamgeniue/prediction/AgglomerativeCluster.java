@@ -5,11 +5,10 @@ import org.tamgeniue.grid.Configuration;
 import org.tamgeniue.model.grid.Grid;
 import org.tamgeniue.model.grid.GridCell;
 import org.tamgeniue.model.grid.GridLeafTraHashItem;
-import org.tamgeniue.utl.AlgorithmUtil;
-import org.tamgeniue.utl.kdtree.KDTree;
-import org.tamgeniue.utl.kdtree.KeyDuplicateException;
-import org.tamgeniue.utl.kdtree.KeyMissingException;
-import org.tamgeniue.utl.kdtree.KeySizeException;
+import org.thirdparty.lib.kdtree.KDTree;
+import org.thirdparty.lib.kdtree.KeyDuplicateException;
+import org.thirdparty.lib.kdtree.KeyMissingException;
+import org.thirdparty.lib.kdtree.KeySizeException;
 
 import java.util.*;
 import java.util.Map.Entry;
@@ -113,11 +112,6 @@ public class AgglomerativeCluster {
 	 */
 	private ArrayList<MicroState> InitialMicroState(
 			ArrayList<Entry<Long, GridLeafTraHashItem>> queryRes, double r) {
-		// ArrayList<Entry<Long,GridLeafTraHashItem>>
-		// queryRes=g.queryRangeTimeSeqCells(cellArray);//query all the cells
-		// for next time stamp
-
-		// result storage
 		ArrayList<MicroState> res = null;
 		// initialize the k-d tree. It is a quad-tree in fact
 		KDTree<MicroState> kt = new KDTree<>(2);

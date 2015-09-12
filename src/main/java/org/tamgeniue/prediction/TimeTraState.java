@@ -277,7 +277,6 @@ public class TimeTraState {
 	 * therefore, each k is minus by 1
 	 * @param k is the time stamp
 	 * @param i is the i-th element state at tmie k
-	 * @return
 	 */
 	public RoIState getState(int k,int i){
 		return timeHisStateArray.get(k-1).get(i);

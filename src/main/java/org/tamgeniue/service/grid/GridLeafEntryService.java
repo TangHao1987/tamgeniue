@@ -7,7 +7,7 @@ import org.tamgeniue.grid.Configuration;
 import org.tamgeniue.model.grid.GridLeafEntry;
 import org.tamgeniue.model.grid.GridLeafTraHashItem;
 import org.tamgeniue.model.grid.PageStartTimeItem;
-import org.tamgeniue.storagemanager.IStorageManager;
+import org.thirdparty.lib.storagemanager.IStorageManager;
 import org.tamgeniue.utl.AlgorithmUtil;
 import org.tamgeniue.utl.serialization.BinarySerializer;
 
