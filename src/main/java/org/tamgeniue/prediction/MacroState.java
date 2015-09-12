@@ -23,8 +23,8 @@ public class MacroState extends State{
 	}
 	
 	public double getRadius(){
-		double sx=super.SSX-LSX*LSX/n;
-		double sy=super.SSY-LSY*LSY/n;
+		double sx=super.squareSumX - locationSumX * locationSumX /n;
+		double sy=super.squareSumY - locationSumY * locationSumY /n;
 		
 		double r=Math.sqrt((sx+sy)/n);
 		if(0==r) r=1;
@@ -33,11 +33,11 @@ public class MacroState extends State{
 	
 	public static double getRadius(State si,State sj){
 		
-		double sLX=si.LSX+sj.LSX;
-		double sLY=si.LSY+sj.LSY;
+		double sLX=si.locationSumX +sj.locationSumX;
+		double sLY=si.locationSumY +sj.locationSumY;
 		
-		double sSSX=si.SSX+sj.SSX;
-		double sSSY=si.SSY+sj.SSY;
+		double sSSX=si.squareSumX +sj.squareSumX;
+		double sSSY=si.squareSumY +sj.squareSumY;
 		
 		int sn=si.n+sj.n;
 		

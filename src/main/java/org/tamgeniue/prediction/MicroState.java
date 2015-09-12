@@ -17,7 +17,6 @@ public class MicroState extends State{
 	public double minBound;//the distance to farthest point
 
 	public MicroState(int inId){
-	
 		super(inId);
 		Ltratime=new HashMap<>();
 		LTraCell=new HashMap<>();
@@ -93,26 +92,26 @@ public class MicroState extends State{
 		addPoint( x, y,  den, e, true);
 	}
 
-	public void addPoint(int x,int y, double den, Entry<Long,GridLeafTraHashItem>e, boolean setBound){
+	public void addPoint(int x,int y, double den, Entry<Long,GridLeafTraHashItem> e, boolean setBound){
 		//sum of position
-		LSX+=x;
-		LSY+=y;
+		locationSumX +=x;
+		locationSumY +=y;
 		
 		//sum of square
-		SSX+=x*x;
-		SSY+=y*y;
+		squareSumX +=x*x;
+		squareSumY +=y*y;
 		
 		//sum of density
 		SumDensity+=den;
 		
-		//add to LC
+		//add to roiCells
 		
 		RoICell rc=new RoICell(x,y);
-		LC.add(rc);
+		roiCells.add(rc);
 		if(null!=e){
 		int key= Configuration.getTraId(e.getKey());
-		//LT.add(key);
-		LT.put(key, rc);
+		//roICellHashMap.add(key);
+		roICellHashMap.put(key, rc);
 		
 		addLtratimeHash(Ltratime,rc,e.getKey());
 		
@@ -135,18 +134,18 @@ public class MicroState extends State{
 		
 		deleteLtratimeHash(Ltratime,rc,point);//remove from Ltratime
 		Integer traId=Configuration.getTraId(point);
-		LT.remove(traId);//remove from LT
-		LC.remove(rc);//remove from LC
+		roICellHashMap.remove(traId);//remove from LT
+		roiCells.remove(rc);//roiCellsmove from LC
 		
 		
 		int x=rc.getRoiX();
 		int y=rc.getRoiY();
 		
-		LSX-=x;
-		LSY-=y;
+		locationSumX -=x;
+		locationSumY -=y;
 		
-		SSX-=x*x;
-		SSY-=y*y;
+		squareSumX -=x*x;
+		squareSumY -=y*y;
 
 		//GridCell gc=g.getGridCell(x, y);//process later, and once
 		//double den=gc.density;
@@ -167,7 +166,7 @@ public class MicroState extends State{
 	public void addMicroState(MicroState ms){
 		
 		super.addState(ms);
-		///LC.addAll(ms.LC);
+		///LroiCellsaddAll(ms.LC);
 		//LT.addAll(ms.LT);
 		//Ltra.putAll(ms.Ltra);
 		addLtratimeHash(Ltratime,ms.Ltratime);
@@ -196,7 +195,7 @@ public class MicroState extends State{
 	 */
 	public void setMinBound(){
 		//if there is only one cell, the radius is sqrt(2)/2
-		if(LC.size()==1){
+		if(roiCells.size()==1){
 			minBound=Configuration.cellRadius;
 			return ;
 		}
@@ -206,7 +205,7 @@ public class MicroState extends State{
 		double temp;
 		
 		//visit all element
-        for (RoICell rc : LC) {
+        for (RoICell rc : roiCells) {
             double p[] = {rc.getRoiX(), rc.getRoiY()};
             temp = (c[0] - p[0]) * (c[0] - p[0]) + (c[1] - p[1]) * (c[1] - p[1]);//distance
             if (temp > max) {//find maximum distance
@@ -219,7 +218,7 @@ public class MicroState extends State{
 	public String toLCString(){
 		
 		String str="";
-		for(RoICell rc:LC){
+		for(RoICell rc: roiCells){
 			str+=rc.toString();
 		}
 		

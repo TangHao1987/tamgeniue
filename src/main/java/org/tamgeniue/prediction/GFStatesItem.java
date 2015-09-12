@@ -78,7 +78,7 @@ public class GFStatesItem {
 	private int compTraSumNum(){
 		int sum=0;
         for (MacroState mac : macs) {
-            sum += mac.LT.size();
+            sum += mac.roICellHashMap.size();
         }
 		return sum;
 	}
@@ -129,7 +129,7 @@ public class GFStatesItem {
 	}
 
 	public int getTraNumPerState(int i){
-		return macs.get(i).LT.size();
+		return macs.get(i).roICellHashMap.size();
 	}
 	
 	public double getScore(){

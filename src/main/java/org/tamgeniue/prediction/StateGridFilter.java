@@ -231,10 +231,10 @@ public class StateGridFilter {
 		HashSet<RoICell> union=new HashSet<>();
 		
 		
-		union.addAll(x_k_i.LC);
-		union.addAll(x_k_1_j.LC);
+		union.addAll(x_k_i.roiCells);
+		union.addAll(x_k_1_j.roiCells);
 		
-		double cat_inter=x_k_i.LC.size()+x_k_1_j.LC.size()-union.size();
+		double cat_inter=x_k_i.roiCells.size()+x_k_1_j.roiCells.size()-union.size();
 		double cat_union=union.size();
 		
 		return (cat_inter/cat_union);
@@ -251,8 +251,8 @@ public class StateGridFilter {
 			return numerator/denominator;
 		}
 		
-		//ArrayList<Integer> z_k_i=ls.getState(ki).getLTArray().LT;
-		//ArrayList<Integer> z_k_1_j=gfStates.getState(k-1, k_1j).LT;
+		//ArrayList<Integer> z_k_i=ls.getState(ki).getLTArray().roICellHashMap;
+		//ArrayList<Integer> z_k_1_j=gfStates.getState(k-1, k_1j).roICellHashMap;
 		
 		ArrayList<Integer> z_k_i=ls.getState(ki).getLTArray();
 		ArrayList<Integer> z_k_1_j=gfStates.getState(k-1, k_1j).getLTArray();

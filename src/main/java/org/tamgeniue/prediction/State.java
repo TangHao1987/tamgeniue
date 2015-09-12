@@ -11,61 +11,61 @@ public class State {
 
 	int id;//each micro state has one id
 	
-	public int n;//the number of points, (LC.size())
+	public int n;//the number of points, (roiCells.size())
 	//public double minBound;//the distance to farthest point
-	public HashSet<RoICell> LC;//record all the cells( or points)
-	public HashMap<Integer,RoICell> LT;//traId and its corresponding cells
+	public HashSet<RoICell> roiCells;//record all the cells( or points)
+	public HashMap<Integer,RoICell> roICellHashMap;//traId and its corresponding cells
 	
 	public double SumDensity;//the sum of density of all cells
-	public double LSX;//x-the sum the position of all cells
-	public double LSY;//y-..
-	public double SSX;//x-the square sum of the position of all cells
-	public double SSY;//y-..
+	public double locationSumX;//x-the sum the position of all cells
+	public double locationSumY;//y-..
+	public double squareSumX;//x-the square sum of the position of all cells
+	public double squareSumY;//y-..
 	
 	
 	public State(int inId){
 	
 		id=inId;
 		
-		LC=new HashSet<>();
-		LT= new HashMap<>();
+		roiCells =new HashSet<>();
+		roICellHashMap = new HashMap<>();
 		
 		n=0;		
 		SumDensity=0;
-		LSX=0;
-		LSY=0;
-		SSX=0;
-		SSY=0;
+		locationSumX =0;
+		locationSumY =0;
+		squareSumX =0;
+		squareSumY =0;
 	}
 	
 	public ArrayList<Integer> getLTArray(){
-		Set<Integer> LTKeys=LT.keySet();
+		Set<Integer> LTKeys= roICellHashMap.keySet();
         return new ArrayList<>(LTKeys);
 	}
 	
 	public State(int inId,State ms1,State ms2){
 		id=inId;
 		
-		LC=new HashSet<>();
+		roiCells =new HashSet<>();
 		//LT=new ArrayList<Integer>();
-		LT= new HashMap<>();
+		roICellHashMap = new HashMap<>();
 		
-		LC.addAll(ms1.LC);
-		LC.addAll(ms2.LC);
+		roiCells.addAll(ms1.roiCells);
+		roiCells.addAll(ms2.roiCells);
 		//LT.addAll(ms1.LT);
 		//LT.addAll(ms2.LT);
-		mergeLT(LT,ms1.LT);
-		mergeLT(LT,ms2.LT);
+		mergeLT(roICellHashMap,ms1.roICellHashMap);
+		mergeLT(roICellHashMap,ms2.roICellHashMap);
 		
 		n=ms1.n+ms2.n;
 		
 		//sum of position
-		LSX=ms1.LSX+ms2.LSX;
-		LSY=ms1.LSY+ms2.LSY;
+		locationSumX =ms1.locationSumX +ms2.locationSumX;
+		locationSumY =ms1.locationSumY +ms2.locationSumY;
 		
 		//sum of square position
-		SSX=ms1.SSX+ms2.SSX;
-		SSY=ms1.SSY+ms2.SSY;
+		squareSumX =ms1.squareSumX +ms2.squareSumX;
+		squareSumY =ms1.squareSumY +ms2.squareSumY;
 		
 		//sum of density
 		SumDensity=ms1.SumDensity+ms2.SumDensity;
@@ -74,21 +74,21 @@ public class State {
 	public State(int inId, State ms1){
 		id=inId;
 		
-		LC=new HashSet<>();
-		LT=new HashMap<>();
-		LC.addAll(ms1.LC);
+		roiCells =new HashSet<>();
+		roICellHashMap =new HashMap<>();
+		roiCells.addAll(ms1.roiCells);
 		//LT.addAll(ms1.LT);
-		mergeLT(LT,ms1.LT);
+		mergeLT(roICellHashMap,ms1.roICellHashMap);
 		
 		n=ms1.n;
 		
 		//sum of position
-		LSX=ms1.LSX;
-		LSY=ms1.LSY;
+		locationSumX =ms1.locationSumX;
+		locationSumY =ms1.locationSumY;
 		
 		//sum of square position
-		SSX=ms1.SSX;
-		SSY=ms1.SSY;
+		squareSumX =ms1.squareSumX;
+		squareSumY =ms1.squareSumY;
 		
 		//sum of density
 		SumDensity=ms1.SumDensity;
@@ -100,8 +100,8 @@ public class State {
 	public double[] getCenter(){
 		double[] c=new double[2];
 		if(!Configuration.doSelfCorrection){
-		c[0]=LSX/n;
-		c[1]=LSY/n;
+		c[0]= locationSumX /n;
+		c[1]= locationSumY /n;
 		return c;
 		}else{
 			return  getCenterWithLifetime();
@@ -112,11 +112,11 @@ public class State {
 	
 	public double getStateTraLifetime(){
 		if(!Configuration.doSelfCorrection){
-			return LT.size();
+			return roICellHashMap.size();
 		}
 		else{
 			double ltSum=0;
-			Set<Entry<Integer,RoICell>> LTSet=LT.entrySet();
+			Set<Entry<Integer,RoICell>> LTSet= roICellHashMap.entrySet();
             for (Entry<Integer, RoICell> LTSetItem : LTSet) {
                 //Integer lt=null;
                 Integer lt = Configuration.lifetimeMap.get(LTSetItem.getKey());//get the lifetime
@@ -145,7 +145,7 @@ public class State {
 			double LSYlt=0;
 			double ltSum=0;
 			
-			Set<Entry<Integer,RoICell>> LTSet=LT.entrySet();
+			Set<Entry<Integer,RoICell>> LTSet= roICellHashMap.entrySet();
         for (Entry<Integer, RoICell> LTSetItem : LTSet) {
             //Integer lt=null;
             Integer lt = Configuration.lifetimeMap.get(LTSetItem.getKey());//get the lifetime
@@ -166,12 +166,6 @@ public class State {
         }
 			c[0]=LSXlt/ltSum;
 			c[1]=LSYlt/ltSum;
-			
-			
-
-			
-			c[0]=LSXlt/ltSum;
-			c[1]=LSYlt/ltSum;
 			return c;
 	
 		
@@ -183,9 +177,7 @@ public class State {
 		if(null==LTB){
 			return;
 		}
-		Set<Entry<Integer,RoICell>> LTBSet=LTB.entrySet();
-
-        for (Entry<Integer, RoICell> LTBItem : LTBSet) {
+        for (Entry<Integer, RoICell> LTBItem : LTB.entrySet()) {
             LTA.put(LTBItem.getKey(), LTBItem.getValue());
         }
 	}
@@ -218,19 +210,19 @@ public class State {
 	 */
 	public void addState(State ms){
 		//sum of position
-		LSX+=ms.LSX;
-		LSY+=ms.LSY;
+		locationSumX +=ms.locationSumX;
+		locationSumY +=ms.locationSumY;
 		
 		//sum of square position
-		SSX+=ms.SSX;
-		SSY+=ms.SSY;
+		squareSumX +=ms.squareSumX;
+		squareSumY +=ms.squareSumY;
 		
 		//sum of density
 		SumDensity+=ms.SumDensity;
 		
-		LC.addAll(ms.LC);
+		roiCells.addAll(ms.roiCells);
 		//LT.addAll(ms.LT);
-		mergeLT(LT,ms.LT);
+		mergeLT(roICellHashMap,ms.roICellHashMap);
 		
 		n+=ms.n;
 	}

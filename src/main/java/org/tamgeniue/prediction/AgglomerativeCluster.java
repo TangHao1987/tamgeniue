@@ -118,12 +118,11 @@ public class AgglomerativeCluster {
         if (null != queryRes && 0 != queryRes.size()) {
             try {
                 // create initial micro states from points
-                ArrayList<MicroState> inMics = createMics(queryRes, kt);
+                ArrayList<MicroState> inMics = createMicroStateList(queryRes, kt);
                 res = mergeMics(inMics, kt, r);// merge thus micro states to maximum
                                                 // micro states
 
             } catch (KeySizeException | KeyMissingException e) {
-                // TODO Auto-generated catch block
                 e.printStackTrace();
             }
         }
@@ -152,13 +151,13 @@ public class AgglomerativeCluster {
 			inkt = new KDTree<>(2);
 			for (MicroState inMic : inMics) {
 				// if inkt is null, create new k-d tree and insert micro states into it
-					KDTreeHashInsertMic(inMic, ml, inkt);
+					insertKDTreeHashMic(inMic, ml, inkt);
 				
 			}
 		} else {
 			for (MicroState inMic : inMics) {
 				// if inkt have been created, only insert all the states into hashmap
-				KDTreeHashInsertMic(inMic, ml, null);
+				insertKDTreeHashMic(inMic, ml, null);
 			}
 		}
 
@@ -236,16 +235,15 @@ public class AgglomerativeCluster {
 	 * @throws KeySizeException
 	 * @throws KeyMissingException
 	 */
-	private ArrayList<MicroState> createMics(
-			ArrayList<Entry<Long, GridLeafTraHashItem>> queryRes,
-			KDTree<MicroState> outkt) throws KeySizeException,
+	private ArrayList<MicroState> createMicroStateList(
+            ArrayList<Entry< Long, GridLeafTraHashItem>> queryRes, KDTree<MicroState> outkt) throws KeySizeException,
 			KeyMissingException {
-		if (null == outkt) {
-			outkt = new KDTree<>(2);
-		}
-
-		if (0 == queryRes.size())
-			return null;
+		if (queryRes.size() == 0) {
+            return null;
+        }
+        if (outkt == null) {
+            outkt = new KDTree<>(2);
+        }
 		// initialize the micro state, consider each cell as a micro state
         for (Entry<Long, GridLeafTraHashItem> queryRe : queryRes) {
             // get cell
@@ -255,11 +253,11 @@ public class AgglomerativeCluster {
 
             // consider each cell as a state
             // idCount++;
-            MicroState ms = new MicroState(Configuration.getStateId());
-            ms.addPoint(txi, tyi, tgci.density, queryRe);
+            MicroState microState = new MicroState(Configuration.getStateId());
+            microState.addPoint(txi, tyi, tgci.density, queryRe);
 
             // insert into k-d tree and hashmap
-            this.KDTreeHashInsertMic(ms, null, outkt);
+            this.insertKDTreeHashMic(microState, null, outkt);
 
             // insert into k-d tree
             // kt.replaceInsert(ms.getCenter(), ms);
@@ -268,8 +266,7 @@ public class AgglomerativeCluster {
         }
         return outkt.size()>2?outkt.toArrayListValue():null;
 	}
-	
-	
+
 	/**
 	 * split the relax micro state into a ast of micro states
 	 */
@@ -517,8 +514,8 @@ public class AgglomerativeCluster {
 	 * @throws KeySizeException
 	 * @throws KeyMissingException
 	 */
-	public void KDTreeHashInsertMic(MicroState ms,
-			HashMap<Integer, MicroState> inMacs,KDTree<MicroState> inkt)
+	public void insertKDTreeHashMic(MicroState ms,
+                                    HashMap<Integer, MicroState> inMacs, KDTree<MicroState> inkt)
 			throws KeySizeException, KeyMissingException {
 		
 		KDTreeHashInsertMic( ms,

@@ -42,7 +42,7 @@ public class TimeMacState {
 	private int compTraNum(int k){
 		int sum=0;
 		for(int i=0;i<macsTimes.get(k).size();i++){
-			sum+=macsTimes.get(k).get(i).LT.size();
+			sum+=macsTimes.get(k).get(i).roICellHashMap.size();
 		}
 		return sum;
 	}
@@ -79,7 +79,7 @@ public class TimeMacState {
 	}
 	
 	public int getTraNumPerState(int k,int ki){
-		return macsTimes.get(k).get(ki).LT.size();
+		return macsTimes.get(k).get(ki).roICellHashMap.size();
 	}
 	
 	public double getBeta_k_j(int k,int j){
