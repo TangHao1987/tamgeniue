@@ -25,20 +25,15 @@ public class AgglomerativeCluster {
 	 */
 	public StatesDendrogram getDendrogram(ArrayList<Entry<Long, GridLeafTraHashItem>> queryRes,
 			double r) {
-
 		ArrayList<MicroState> mics = InitialMicroState(queryRes, r);
-		ArrayList<ArrayList<MacroState>> den= buildDendrogram(mics, r);
-
-        return new StatesDendrogram(mics,den);
+        return getDendrogramMics(mics, r);
 	}
 	
 	/**
 	 * get dendrogram from micro states directly
 	 */
 	public StatesDendrogram getDendrogramMics(ArrayList<MicroState> mics,double r){
-		
-		ArrayList<ArrayList<MacroState>> den= buildDendrogram(mics, r);//build the dendrogram
-
+		ArrayList<ArrayList<MacroState>> den= buildDendrogram(mics, r);
         return new StatesDendrogram(mics,den);
 	}
 	
@@ -56,7 +51,7 @@ public class AgglomerativeCluster {
 	 */
 	public  ArrayList<MicroState> Releax2Mics(ArrayList<RelaxMicroState> rMics,double r){
 		ArrayList<MicroState> initalMics=SplitMics(rMics, r);//split the relax micro state
-        return mergeMics(initalMics, null, r);
+        return mergeMicroStates(initalMics, null, r);
 	}
 
 	private ArrayList<ArrayList<MacroState>> buildDendrogram(
@@ -114,12 +109,13 @@ public class AgglomerativeCluster {
 			ArrayList<Entry<Long, GridLeafTraHashItem>> queryRes, double r) {
 		ArrayList<MicroState> res = null;
 		// initialize the k-d tree. It is a quad-tree in fact
-		KDTree<MicroState> kt = new KDTree<>(2);
-        if (null != queryRes && 0 != queryRes.size()) {
+
+        if (queryRes != null && queryRes.size() != 0) {
             try {
                 // create initial micro states from points
-                ArrayList<MicroState> inMics = createMicroStateList(queryRes, kt);
-                res = mergeMics(inMics, kt, r);// merge thus micro states to maximum
+                KDTree<MicroState> kdTree = new KDTree<>(2);
+                ArrayList<MicroState> inMics = createMicroStateList(queryRes, kdTree);
+                res = mergeMicroStates(inMics, kdTree, r);// merge thus micro states to maximum
                                                 // micro states
 
             } catch (KeySizeException | KeyMissingException e) {
@@ -138,133 +134,102 @@ public class AgglomerativeCluster {
 	 *            time), create a new k-d tree, and store each state into k-d
 	 *            tree
 	 */
-	public ArrayList<MicroState> mergeMics(ArrayList<MicroState> inMics,KDTree<MicroState> inkt, double r) {
-		if (null == inMics) {
-			return null;
-		}
+    public ArrayList<MicroState> mergeMicroStates(ArrayList<MicroState> microstateList, KDTree<MicroState> inkt, double r) {
+        if (null == microstateList) {
+            return null;
+        }
         ArrayList<MicroState> res;
-		try {
-		// store all the micro state and expend them, until the map is empty
-		HashMap<Integer, MicroState> ml = new HashMap<>();
-		if (null == inkt) {// if inkt is null, create a new k-d tree to store
-							// all micro states
-			inkt = new KDTree<>(2);
-			for (MicroState inMic : inMics) {
-				// if inkt is null, create new k-d tree and insert micro states into it
-					insertKDTreeHashMic(inMic, ml, inkt);
-				
-			}
-		} else {
-			for (MicroState inMic : inMics) {
-				// if inkt have been created, only insert all the states into hashmap
-				insertKDTreeHashMic(inMic, ml, null);
-			}
-		}
+        try {
+            HashMap<Integer, MicroState> idMsMap = new HashMap<>();
+            if (null == inkt) {// if inkt is null, create a new k-d tree to store
+                // all micro states
+                inkt = new KDTree<>(2);
+                for (MicroState inMic : microstateList) {
+                    insertKDTree(inMic, idMsMap, inkt);
+                }
+            }
+            for (MicroState inMic : microstateList) {
+                idMsMap.put(inMic.id, inMic);
+            }
 
-		assert (ml.size() == inkt.size());
+            assert (idMsMap.size() == inkt.size());
 
-		// until there is no micro state can be expanded
-		while (ml.size() > 0) {
-			// get one micro state from hashmap
-			Collection<MicroState> col = ml.values();
-			Iterator<MicroState> itrMS = col.iterator();
-			MicroState col_e = itrMS.next();
+            while (idMsMap.size() > 0) {
+                // get one micro state from hashmap
+                Collection<MicroState> col = idMsMap.values();
+                Iterator<MicroState> msIterator = col.iterator();
+                MicroState currentMs = msIterator.next();
+                // if it cannot be expanded, it will not be added into the map
+                msIterator.remove();
+                // ml.remove(col_e.id);
 
-			// remove from hashmap, if it cannot be expanded, it will not be
-			// added into the map
-			itrMS.remove();
-			// ml.remove(col_e.id);
+                // query all the possible micro states
+                List<MicroState> msSets = inkt.nearestEuclidean(currentMs.getCenter(),
+                        2 * r - currentMs.minBound);
+                if ((msSets == null) || (msSets.size() == 0)) {
+                    continue;
+                }
 
-			// query all the possible micro states
-			List<MicroState> ms_sets = inkt.nearestEuclidean(col_e.getCenter(),
-					2 * r - col_e.minBound);
-			if (null == ms_sets || 0 == ms_sets.size())
-				continue;
+                // visit all the possible nearest neighbors by iterator
+                MicroState[] microStateArray = msSets.toArray(new MicroState[1]);
 
-			// visit all the possible nearest neighbors by iterator
-			MicroState[] a = new MicroState[1];
-			MicroState[] ms_sets_A = ms_sets.toArray(a);
+                for (int j = microStateArray.length - 1; j >= 0; j--) {
+                    MicroState nbs = microStateArray[j];
+                    if (nbs.id == currentMs.id) {
+                        continue;
+                    }
+                    // if true, this state is expanded
+                    if (nbs.getDisCenter(currentMs) - nbs.minBound - currentMs.minBound <= 2 * r) {
+                        // delete this micro state, as it will be changed
+                        // col_e has been removed from hashmap ml
+                        inkt.delete(currentMs.getCenter());
+                        // delete nbs, as it will be absorbed
+                        inkt.delete(nbs.getCenter());
+                        // remove it from hashmap ml
+                        idMsMap.remove(nbs.id);
+                        idMsMap.remove(currentMs.id);
 
-			for (int j = ms_sets_A.length - 1; j >= 0; j--) {
-				MicroState nbs = ms_sets_A[j]; // get one micro state
-				if (nbs.id == col_e.id)
-					continue;// ignore themselves
-				// if true, this state is expanded
-				if (nbs.getDisCenter(col_e) - nbs.minBound - col_e.minBound <= 2 * r) {
-					// delete this micro state, as it will be changed,noted that
-					// col_e has been removed from hashmap ml
-					inkt.delete(col_e.getCenter());
-					// delete nbs, as it will be absorbed
-					//if(!equalDoubleArray(col_e.getCenter(),nbs.getCenter()))
-					inkt.delete(nbs.getCenter());
-					// remove it from hashmap ml
-					ml.remove(nbs.id);
-					ml.remove(col_e.id);
+                        MicroState ms = new MicroState(Configuration.getStateId(),
+                                currentMs, nbs);
+                        insertKDTree(ms, idMsMap, inkt);
+                        break;
+                    }
 
-					// col_e.addMicroState(nbs);
-					// ml.put(col_e.id,col_e);
+                }
+            }
+        } catch (KeySizeException | KeyMissingException e) {
+            e.printStackTrace();
+        }
 
-					MicroState ms = new MicroState(Configuration.getStateId(),
-							col_e, nbs);
-					this.KDTreeHashInsertMic(ms, ml,false, inkt,true);// note that we donot insert it into hashmap again.
-
-					// kt.replaceInsert(col_e.getCenter(), col_e);
-
-					break;
-				}
-
-			}
-		}
-		} catch (KeySizeException | KeyMissingException e) {
-			e.printStackTrace();
-		}
-        if(inkt.size()>= Configuration.minNumPerMic){
-		res = inkt.toArrayListValue();// to arrayList
-		return res;
-		}else{
-			return null;
-		}
-	}
+        if (inkt.size() >= Configuration.minNumPerMic) {
+            res = inkt.toArrayListValue();// to arrayList
+            return res;
+        } else {
+            return null;
+        }
+    }
 
 	/**
 	 * given a set of query result, initialize them into a set of micro states.
 	 * Most of time, just initialize each point as a state however, some points
 	 * are within the same cells are merge
      *
-	 * @param outkt: if outkt is not null, the micro states also are stored into k-d tree
+	 * @param kdTree: if outkt is not null, the micro states also are stored into k-d tree
 	 * @throws KeySizeException
 	 * @throws KeyMissingException
 	 */
 	private ArrayList<MicroState> createMicroStateList(
-            ArrayList<Entry< Long, GridLeafTraHashItem>> queryRes, KDTree<MicroState> outkt) throws KeySizeException,
+            ArrayList<Entry< Long, GridLeafTraHashItem>> queryRes, KDTree<MicroState> kdTree) throws KeySizeException,
 			KeyMissingException {
-		if (queryRes.size() == 0) {
-            return null;
-        }
-        if (outkt == null) {
-            outkt = new KDTree<>(2);
-        }
-		// initialize the micro state, consider each cell as a micro state
         for (Entry<Long, GridLeafTraHashItem> queryRe : queryRes) {
-            // get cell
-            int txi = queryRe.getValue().getCellX();
-            int tyi = queryRe.getValue().getCellY();
-            GridCell tgci = g.getGridCell(txi, tyi);
-
-            // consider each cell as a state
-            // idCount++;
+            int x = queryRe.getValue().getCellX();
+            int y = queryRe.getValue().getCellY();
+            GridCell cell = g.getGridCell(x, y);
             MicroState microState = new MicroState(Configuration.getStateId());
-            microState.addPoint(txi, tyi, tgci.density, queryRe);
-
-            // insert into k-d tree and hashmap
-            this.insertKDTreeHashMic(microState, null, outkt);
-
-            // insert into k-d tree
-            // kt.replaceInsert(ms.getCenter(), ms);
-            // put into label hashmap
-            // ml.put(ms.id, ms);
+            microState.addPoint(x, y, cell.density, queryRe);
+            insertKDTree(microState, null, kdTree);
         }
-        return outkt.size()>2?outkt.toArrayListValue():null;
+        return kdTree.size()>2?kdTree.toArrayListValue():null;
 	}
 
 	/**
@@ -507,56 +472,28 @@ public class AgglomerativeCluster {
 		}
 
 	}
-	
-	/**
-	 * @param inMacs: if it is null, just ignore it
-	 * @param inkt:if it is null, just ignore it
-	 * @throws KeySizeException
-	 * @throws KeyMissingException
-	 */
-	public void insertKDTreeHashMic(MicroState ms,
-                                    HashMap<Integer, MicroState> inMacs, KDTree<MicroState> inkt)
-			throws KeySizeException, KeyMissingException {
-		
-		KDTreeHashInsertMic( ms,
-				inMacs, true, inkt,true);
-	}
-	
-	
-	
-	/**
-	 * @throws KeySizeException
-	 * @throws KeyMissingException
-	 */
-	public void KDTreeHashInsertMic(MicroState ms,
-			HashMap<Integer, MicroState> inMacs, boolean insertHash,KDTree<MicroState> inkt,boolean insertKT)
-			throws KeySizeException, KeyMissingException {
 
-		MicroState insertMac = ms;
+    public MicroState insertKDTree(MicroState microState,HashMap<Integer, MicroState> idMicroStateMap, KDTree<MicroState> kdTree)
+			throws KeySizeException, KeyMissingException {
 		try {
-			if(null!=inkt&&insertKT){
-			inkt.insert(insertMac.getCenter(), insertMac);
+			if(kdTree != null){
+			    kdTree.insert(microState.getCenter(), microState);
 			}
 		} catch (KeyDuplicateException e) {
-			// TODO Auto-generated catch block
-			// e.printStackTrace();
-			MicroState ms0 = inkt.search(ms.getCenter());
-			inkt.delete(ms0.getCenter());
-			if(null!=inMacs){
-				inMacs.remove(ms0.id);
+			MicroState ms0 = kdTree.search(microState.getCenter());
+			kdTree.delete(ms0.getCenter());
+			if(idMicroStateMap != null){
+                //TODO: break point test to see if possible to move below statement to outside
+				idMicroStateMap.remove(ms0.id);
 			}
-			insertMac = new MicroState(Configuration.getStateId(), ms, ms0);
+            microState = new MicroState(Configuration.getStateId(), microState, ms0);
 			try {
-                inkt.insert(insertMac.getCenter(), insertMac);
+                kdTree.insert(microState.getCenter(), microState);
             } catch (KeyDuplicateException e1) {
-				// TODO Auto-generated catch block
 				e1.printStackTrace();
 			}
 		}
-		if(null!=inMacs&&insertHash){
-		inMacs.put(insertMac.id, insertMac);
-		}
-
+        return microState;
 	}
 	
 	/**
@@ -617,7 +554,6 @@ public class AgglomerativeCluster {
 			}
 			}
 		} catch (KeySizeException | KeyMissingException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
     }

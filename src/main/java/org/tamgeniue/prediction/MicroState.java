@@ -88,7 +88,6 @@ public class MicroState extends State{
 	 * add one cell into the microstate
 	 */
 	public void addPoint(int x,int y,double den,Entry<Long,GridLeafTraHashItem> e){
-	
 		addPoint( x, y,  den, e, true);
 	}
 

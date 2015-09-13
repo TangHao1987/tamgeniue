@@ -308,7 +308,7 @@ public class Predictor {
 
 		// get the maximum large micro state
 
-        return inAC.mergeMics(sumMics, null, r);
+        return inAC.mergeMicroStates(sumMics, null, r);
 	}
 	
 	/**
